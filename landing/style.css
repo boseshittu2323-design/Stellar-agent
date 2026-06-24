@@ -711,6 +711,43 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
   color: var(--accent);
 }
 
+/* ── Try It Playground ── */
+.tryit-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.tryit-header .section-desc {
+  max-width: 520px;
+  margin: 0 auto;
+}
+.tryit-embed {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.tryit-embed iframe {
+  display: block;
+  width: 100%;
+  height: 520px;
+  border: none;
+}
+.tryit-fallback {
+  display: none;
+  padding: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.tryit-fallback a { color: var(--accent); }
+.tryit-embed iframe:not([src]),
+.tryit-embed iframe[src=""] ~ .tryit-fallback { display: block; }
+
+@media (max-width: 768px) {
+  .tryit-embed iframe { height: 380px; }
+}
+
 /* ── Getting Started Guide ── */
 .guide-header {
   text-align: center;
