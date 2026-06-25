@@ -12,6 +12,15 @@ import {
 } from "@stellar/stellar-sdk";
 import type { Job, JobStatus, MarcConfig } from "./types.js";
 
+// --- ScVal helpers (exported for custom contract interactions) ---
+
+export const i128ToScVal = (v: bigint) => nativeToScVal(v, { type: "i128" });
+export const u128ToScVal = (v: bigint) => nativeToScVal(v, { type: "u128" });
+export const u64ToScVal  = (v: bigint) => nativeToScVal(v, { type: "u64" });
+export const u32ToScVal  = (v: number) => nativeToScVal(v, { type: "u32" });
+export const strToScVal  = (v: string) => nativeToScVal(v, { type: "string" });
+export const addrToScVal = (v: string) => new Address(v).toScVal();
+
 /**
  * Typed wrapper around the `agentic_commerce` Soroban contract.
  *
@@ -108,6 +117,9 @@ export class CommerceClient {
         status: (Array.isArray(native.status) ? native.status[0] : native.status) as JobStatus,
         description: native.description,
         deliverable: native.deliverable,
+        funded_at: BigInt(native.funded_at ?? 0),
+        created_at: BigInt(native.created_at ?? 0),
+        updated_at: BigInt(native.updated_at ?? 0),
       } as Job;
     });
   }
@@ -136,6 +148,22 @@ export class CommerceClient {
       nativeToScVal(newBps, { type: "u32" }),
     );
     await this.invoke(admin, op, () => undefined);
+  }
+
+  /**
+   * Get the balance of `address` for a given token.
+   * Pass `"native"` for XLM (returns stroops as bigint),
+   * or a Soroban token contract address for SAC/custom tokens.
+   */
+  async getBalance(address: string, token: string): Promise<bigint> {
+    if (token === "native") {
+      const account = await this.server.getAccount(address);
+      const xlmBalance = account.balances.find((b) => b.asset_type === "native");
+      return BigInt(Math.round(Number(xlmBalance?.balance ?? "0") * 1e7));
+    }
+    const tokenContract = new Contract(token);
+    const op = tokenContract.call("balance", new Address(address).toScVal());
+    return await this.simulate(op, (v) => BigInt(scValToNative(v) as string));
   }
 
   // --- internals (same pattern as IdentityClient) ---
